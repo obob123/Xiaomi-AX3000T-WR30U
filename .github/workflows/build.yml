@@ -151,17 +151,36 @@ jobs:
             grep '^CONFIG_PACKAGE_' ../seed.config >> .config 2>/dev/null || true
           fi
 
+          # ----- 关闭 CONFIG_SHADOW_PASSWORDS -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
+          # ----- 禁用 shadow 全家桶（busybox 已提供替代） -----
+          sed -i '/CONFIG_PACKAGE_shadow/d' .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
+
+          # ----- 禁用 smartmontools / mdadm（无 USB/SATA 硬件） -----
+          sed -i '/CONFIG_PACKAGE_smartd/d' .config
+          sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+          echo "# CONFIG_PACKAGE_smartd is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+
+          # ----- 启用简体中文语言（必须放在 oldconfig 之前） -----
           sed -i '/CONFIG_LUCI_LANG_zh_Hans/d' .config
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
 
+          # ----- 使用 oldconfig 保护全局配置 -----
           yes "" | make oldconfig
 
+          # ----- 再次确认 CONFIG_SHADOW_PASSWORDS 保持关闭 -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
+          # ----- 设备校验 -----
           if ! grep -q "$DEVICE_ID" .config; then
             echo "❌ 错误：设备类型 $DEVICE_ID 未正确选中！"
             exit 1
@@ -338,14 +357,32 @@ jobs:
             grep '^CONFIG_PACKAGE_' ../seed.config >> .config 2>/dev/null || true
           fi
 
+          # ----- 关闭 CONFIG_SHADOW_PASSWORDS -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
+          # ----- 禁用 shadow 全家桶（busybox 已提供替代） -----
+          sed -i '/CONFIG_PACKAGE_shadow/d' .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
+
+          # ----- 禁用 smartmontools / mdadm（无 USB/SATA 硬件） -----
+          sed -i '/CONFIG_PACKAGE_smartd/d' .config
+          sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+          echo "# CONFIG_PACKAGE_smartd is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+
+          # ----- 启用简体中文语言（必须放在 oldconfig 之前） -----
           sed -i '/CONFIG_LUCI_LANG_zh_Hans/d' .config
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
 
+          # ----- 使用 oldconfig 保护全局配置 -----
           yes "" | make oldconfig
 
+          # ----- 再次确认 CONFIG_SHADOW_PASSWORDS 保持关闭 -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
