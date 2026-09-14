@@ -115,6 +115,50 @@ jobs:
         working-directory: ImmortalWrt
         run: ./scripts/feeds update -a && ./scripts/feeds install -a
 
+      # ========== 清理 default-settings 中的不必要依赖 ==========
+      - name: 清理 default-settings 中的不必要依赖
+        working-directory: ImmortalWrt
+        run: |
+          echo "==== 查找 default-settings 相关文件 ===="
+          find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null
+          find package/ -path "*default-settings*" -name "*.mk" 2>/dev/null
+
+          echo ""
+          echo "==== 清理前的依赖 ===="
+          for file in $(find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+          done
+
+          echo ""
+          echo "==== 开始清理 ===="
+
+          # 处理所有 default-settings 相关的 Makefile 和 .mk 文件
+          for file in $(find package/ -path "*default-settings*" \( -name "Makefile" -o -name "*.mk" \) 2>/dev/null); do
+            echo "🔧 处理: $file"
+
+            # 删除整行包含 +shadow / +mdadm / +smartmontools / +smartd 的依赖
+            sed -i -E 's/\+shadow[a-z-]*//g' "$file"
+            sed -i -E 's/\+mdadm//g' "$file"
+            sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartd//g' "$file"
+
+            # 清理可能残留的多余空格
+            sed -i 's/  */ /g' "$file"
+
+            echo "  ✅ 已处理"
+          done
+
+          echo ""
+          echo "==== 清理后的依赖 ===="
+          for file in $(find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
+          done
+
+          echo ""
+          echo "✅ default-settings 依赖清理完成"
+
       # ========== 根据选择的设备和布局加载对应配置 ==========
       - name: 加载设备配置
         working-directory: ImmortalWrt
@@ -322,6 +366,46 @@ jobs:
         working-directory: ImmortalWrt
         run: ./scripts/feeds update -a && ./scripts/feeds install -a
 
+      # ========== 清理 default-settings 中的不必要依赖 ==========
+      - name: 清理 default-settings 中的不必要依赖
+        working-directory: ImmortalWrt
+        run: |
+          echo "==== 查找 default-settings 相关文件 ===="
+          find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null
+          find package/ -path "*default-settings*" -name "*.mk" 2>/dev/null
+
+          echo ""
+          echo "==== 清理前的依赖 ===="
+          for file in $(find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+          done
+
+          echo ""
+          echo "==== 开始清理 ===="
+
+          for file in $(find package/ -path "*default-settings*" \( -name "Makefile" -o -name "*.mk" \) 2>/dev/null); do
+            echo "🔧 处理: $file"
+
+            sed -i -E 's/\+shadow[a-z-]*//g' "$file"
+            sed -i -E 's/\+mdadm//g' "$file"
+            sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartd//g' "$file"
+            sed -i 's/  */ /g' "$file"
+
+            echo "  ✅ 已处理"
+          done
+
+          echo ""
+          echo "==== 清理后的依赖 ===="
+          for file in $(find package/ -path "*default-settings*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
+          done
+
+          echo ""
+          echo "✅ default-settings 依赖清理完成"
+
       - name: 加载设备配置
         working-directory: ImmortalWrt
         run: |
@@ -357,17 +441,14 @@ jobs:
             grep '^CONFIG_PACKAGE_' ../seed.config >> .config 2>/dev/null || true
           fi
 
-          # ----- 关闭 CONFIG_SHADOW_PASSWORDS -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
-          # ----- 禁用 shadow 全家桶（busybox 已提供替代） -----
           sed -i '/CONFIG_PACKAGE_shadow/d' .config
           echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
           echo "# CONFIG_PACKAGE_shadow is not set" >> .config
           echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
 
-          # ----- 禁用 smartmontools / mdadm（无 USB/SATA 硬件） -----
           sed -i '/CONFIG_PACKAGE_smartd/d' .config
           sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
           sed -i '/CONFIG_PACKAGE_mdadm/d' .config
@@ -375,14 +456,11 @@ jobs:
           echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
           echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
 
-          # ----- 启用简体中文语言（必须放在 oldconfig 之前） -----
           sed -i '/CONFIG_LUCI_LANG_zh_Hans/d' .config
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
 
-          # ----- 使用 oldconfig 保护全局配置 -----
           yes "" | make oldconfig
 
-          # ----- 再次确认 CONFIG_SHADOW_PASSWORDS 保持关闭 -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
 
