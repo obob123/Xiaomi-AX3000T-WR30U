@@ -102,6 +102,54 @@ jobs:
           rm -rf temp_kenzok8
           echo "✅ quickstart 全部依赖链已拉取"
 
+      # ========== 修改 quickstart Makefile，移除不需要的依赖 ==========
+      - name: 修改 quickstart Makefile 移除不必要依赖
+        working-directory: ImmortalWrt
+        run: |
+          echo "==== 查找 quickstart 相关 Makefile ===="
+          find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null
+
+          echo ""
+          echo "==== 清理前的依赖 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+          done
+
+          echo ""
+          echo "==== 开始清理 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "🔧 处理: $file"
+
+            cp "$file" "$file.bak"
+
+            sed -i -E '/shadow-utils/d' "$file"
+            sed -i -E '/smartmontools/d' "$file"
+            sed -i -E '/smartd\b/d' "$file"
+            sed -i -E '/mdadm/d' "$file"
+
+            sed -i -E 's/\+shadow-utils//g' "$file"
+            sed -i -E 's/\+shadow[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartd//g' "$file"
+            sed -i -E 's/\+mdadm//g' "$file"
+
+            sed -i 's/  */ /g' "$file"
+            sed -i 's/ $//' "$file"
+
+            echo "  ✅ 已处理"
+          done
+
+          echo ""
+          echo "==== 清理后的依赖 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
+          done
+
+          echo ""
+          echo "✅ quickstart 依赖清理完成"
+
       - name: 复制自定义配置文件
         run: cp -f feeds.conf.default diy.sh seed.config ax3000t-stock.config ax3000t-ubootmod.config wr30u-stock.config wr30u-ubootmod.config ImmortalWrt/ 2>/dev/null || true
 
@@ -132,18 +180,13 @@ jobs:
 
           echo ""
           echo "==== 开始清理 ===="
-
-          # 处理所有 default-settings 相关的 Makefile 和 .mk 文件
           for file in $(find package/ -path "*default-settings*" \( -name "Makefile" -o -name "*.mk" \) 2>/dev/null); do
             echo "🔧 处理: $file"
 
-            # 删除整行包含 +shadow / +mdadm / +smartmontools / +smartd 的依赖
             sed -i -E 's/\+shadow[a-z-]*//g' "$file"
             sed -i -E 's/\+mdadm//g' "$file"
             sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
             sed -i -E 's/\+smartd//g' "$file"
-
-            # 清理可能残留的多余空格
             sed -i 's/  */ /g' "$file"
 
             echo "  ✅ 已处理"
@@ -219,6 +262,38 @@ jobs:
 
           # ----- 使用 oldconfig 保护全局配置 -----
           yes "" | make oldconfig
+
+          # ----- oldconfig 后强制清理（保险措施） -----
+          echo "==== oldconfig 后强制清理 ===="
+          sed -i '/CONFIG_PACKAGE_shadow/d' .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+          sed -i '/CONFIG_PACKAGE_smartd/d' .config
+          sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartd is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools-drivedb is not set" >> .config
+
+          # ----- 验证清理结果 -----
+          echo "==== 验证 ===="
+          if grep -q "^CONFIG_PACKAGE_shadow.*=y" .config; then
+            echo "❌ shadow 仍被选中"
+          else
+            echo "✅ shadow 已禁用"
+          fi
+          if grep -q "^CONFIG_PACKAGE_mdadm=y" .config; then
+            echo "❌ mdadm 仍被选中"
+          else
+            echo "✅ mdadm 已禁用"
+          fi
+          if grep -q "^CONFIG_PACKAGE_smart.*=y" .config; then
+            echo "❌ smart 仍被选中"
+          else
+            echo "✅ smart 已禁用"
+          fi
 
           # ----- 再次确认 CONFIG_SHADOW_PASSWORDS 保持关闭 -----
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
@@ -353,6 +428,54 @@ jobs:
           rm -rf temp_kenzok8
           echo "✅ quickstart 全部依赖链已拉取"
 
+      # ========== 修改 quickstart Makefile，移除不需要的依赖 ==========
+      - name: 修改 quickstart Makefile 移除不必要依赖
+        working-directory: ImmortalWrt
+        run: |
+          echo "==== 查找 quickstart 相关 Makefile ===="
+          find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null
+
+          echo ""
+          echo "==== 清理前的依赖 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+          done
+
+          echo ""
+          echo "==== 开始清理 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "🔧 处理: $file"
+
+            cp "$file" "$file.bak"
+
+            sed -i -E '/shadow-utils/d' "$file"
+            sed -i -E '/smartmontools/d' "$file"
+            sed -i -E '/smartd\b/d' "$file"
+            sed -i -E '/mdadm/d' "$file"
+
+            sed -i -E 's/\+shadow-utils//g' "$file"
+            sed -i -E 's/\+shadow[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
+            sed -i -E 's/\+smartd//g' "$file"
+            sed -i -E 's/\+mdadm//g' "$file"
+
+            sed -i 's/  */ /g' "$file"
+            sed -i 's/ $//' "$file"
+
+            echo "  ✅ 已处理"
+          done
+
+          echo ""
+          echo "==== 清理后的依赖 ===="
+          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
+            echo "--- $file ---"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
+          done
+
+          echo ""
+          echo "✅ quickstart 依赖清理完成"
+
       - name: 复制自定义配置文件
         run: cp -f feeds.conf.default diy.sh seed.config ax3000t-stock.config ax3000t-ubootmod.config wr30u-stock.config wr30u-ubootmod.config ImmortalWrt/ 2>/dev/null || true
 
@@ -383,7 +506,6 @@ jobs:
 
           echo ""
           echo "==== 开始清理 ===="
-
           for file in $(find package/ -path "*default-settings*" \( -name "Makefile" -o -name "*.mk" \) 2>/dev/null); do
             echo "🔧 处理: $file"
 
@@ -460,6 +582,20 @@ jobs:
           echo "CONFIG_LUCI_LANG_zh_Hans=y" >> .config
 
           yes "" | make oldconfig
+
+          # ----- oldconfig 后强制清理（保险措施） -----
+          echo "==== oldconfig 后强制清理 ===="
+          sed -i '/CONFIG_PACKAGE_shadow/d' .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+          sed -i '/CONFIG_PACKAGE_smartd/d' .config
+          sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartd is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
+          echo "# CONFIG_PACKAGE_smartmontools-drivedb is not set" >> .config
 
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
