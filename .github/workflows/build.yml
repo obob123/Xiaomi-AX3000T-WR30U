@@ -113,29 +113,28 @@ jobs:
           echo "==== 清理前的依赖 ===="
           for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
             echo "--- $file ---"
-            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
           done
 
           echo ""
-          echo "==== 开始清理 ===="
+          echo "==== 开始清理（只做行内替换，保留其他依赖）===="
           for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
             echo "🔧 处理: $file"
 
             cp "$file" "$file.bak"
 
-            sed -i -E '/shadow-utils/d' "$file"
-            sed -i -E '/smartmontools/d' "$file"
-            sed -i -E '/smartd\b/d' "$file"
-            sed -i -E '/mdadm/d' "$file"
-
+            # 只删除特定包名，不删除整行
             sed -i -E 's/\+shadow-utils//g' "$file"
+            sed -i -E 's/\+shadow-useradd//g' "$file"
             sed -i -E 's/\+shadow[a-z-]*//g' "$file"
             sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
-            sed -i -E 's/\+smartd//g' "$file"
+            sed -i -E 's/\+smartd\b//g' "$file"
             sed -i -E 's/\+mdadm//g' "$file"
 
+            # 清理多余空格和行尾反斜杠
             sed -i 's/  */ /g' "$file"
             sed -i 's/ $//' "$file"
+            sed -i 's/ *\\$//' "$file"
 
             echo "  ✅ 已处理"
           done
@@ -263,36 +262,62 @@ jobs:
           # ----- 使用 oldconfig 保护全局配置 -----
           yes "" | make oldconfig
 
-          # ----- oldconfig 后强制清理（保险措施） -----
+          # ----- oldconfig 后强制清理所有 shadow 包和 smartmdadm -----
           echo "==== oldconfig 后强制清理 ===="
           sed -i '/CONFIG_PACKAGE_shadow/d' .config
-          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
           sed -i '/CONFIG_PACKAGE_smartd/d' .config
           sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
-          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+
+          # 显式禁用所有 shadow 子包
           echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
           echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
-          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chage is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chfn is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chgpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chsh is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-expiry is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-faillog is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-gpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupadd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupdel is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupmems is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupmod is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groups is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpck is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpunconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-lastlog is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-login is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-logoutd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newgidmap is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newgrp is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newuidmap is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newusers is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-nologin is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-passwd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwck is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwunconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-su is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-useradd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-userdel is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-usermod is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-vipw is not set" >> .config
           echo "# CONFIG_PACKAGE_smartd is not set" >> .config
           echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
           echo "# CONFIG_PACKAGE_smartmontools-drivedb is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
 
-          # ----- 验证清理结果 -----
-          echo "==== 验证 ===="
+          # ----- 验证 -----
+          echo "==== 验证 shadow 是否已禁用 ===="
           if grep -q "^CONFIG_PACKAGE_shadow.*=y" .config; then
-            echo "❌ shadow 仍被选中"
+            echo "❌ shadow 仍被选中："
+            grep "^CONFIG_PACKAGE_shadow.*=y" .config
           else
-            echo "✅ shadow 已禁用"
-          fi
-          if grep -q "^CONFIG_PACKAGE_mdadm=y" .config; then
-            echo "❌ mdadm 仍被选中"
-          else
-            echo "✅ mdadm 已禁用"
-          fi
-          if grep -q "^CONFIG_PACKAGE_smart.*=y" .config; then
-            echo "❌ smart 仍被选中"
-          else
-            echo "✅ smart 已禁用"
+            echo "✅ 所有 shadow 包已禁用"
           fi
 
           # ----- 再次确认 CONFIG_SHADOW_PASSWORDS 保持关闭 -----
@@ -439,29 +464,28 @@ jobs:
           echo "==== 清理前的依赖 ===="
           for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
             echo "--- $file ---"
-            grep -E "DEPENDS|shadow|mdadm|smart" "$file" || echo "(无相关依赖)"
+            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
           done
 
           echo ""
-          echo "==== 开始清理 ===="
+          echo "==== 开始清理（只做行内替换，保留其他依赖）===="
           for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
             echo "🔧 处理: $file"
 
             cp "$file" "$file.bak"
 
-            sed -i -E '/shadow-utils/d' "$file"
-            sed -i -E '/smartmontools/d' "$file"
-            sed -i -E '/smartd\b/d' "$file"
-            sed -i -E '/mdadm/d' "$file"
-
+            # 只删除特定包名，不删除整行
             sed -i -E 's/\+shadow-utils//g' "$file"
+            sed -i -E 's/\+shadow-useradd//g' "$file"
             sed -i -E 's/\+shadow[a-z-]*//g' "$file"
             sed -i -E 's/\+smartmontools[a-z-]*//g' "$file"
-            sed -i -E 's/\+smartd//g' "$file"
+            sed -i -E 's/\+smartd\b//g' "$file"
             sed -i -E 's/\+mdadm//g' "$file"
 
+            # 清理多余空格和行尾反斜杠
             sed -i 's/  */ /g' "$file"
             sed -i 's/ $//' "$file"
+            sed -i 's/ *\\$//' "$file"
 
             echo "  ✅ 已处理"
           done
@@ -583,19 +607,61 @@ jobs:
 
           yes "" | make oldconfig
 
-          # ----- oldconfig 后强制清理（保险措施） -----
+          # ----- oldconfig 后强制清理所有 shadow 包和 smartmdadm -----
           echo "==== oldconfig 后强制清理 ===="
           sed -i '/CONFIG_PACKAGE_shadow/d' .config
-          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
           sed -i '/CONFIG_PACKAGE_smartd/d' .config
           sed -i '/CONFIG_PACKAGE_smartmontools/d' .config
-          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
+          sed -i '/CONFIG_PACKAGE_mdadm/d' .config
+
           echo "# CONFIG_PACKAGE_shadow is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-utils is not set" >> .config
           echo "# CONFIG_PACKAGE_shadow-common is not set" >> .config
-          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chage is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chfn is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chgpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-chsh is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-expiry is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-faillog is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-gpasswd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupadd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupdel is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupmems is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groupmod is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-groups is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpck is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-grpunconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-lastlog is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-login is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-logoutd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newgidmap is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newgrp is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newuidmap is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-newusers is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-nologin is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-passwd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwck is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-pwunconv is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-su is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-useradd is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-userdel is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-usermod is not set" >> .config
+          echo "# CONFIG_PACKAGE_shadow-vipw is not set" >> .config
           echo "# CONFIG_PACKAGE_smartd is not set" >> .config
           echo "# CONFIG_PACKAGE_smartmontools is not set" >> .config
           echo "# CONFIG_PACKAGE_smartmontools-drivedb is not set" >> .config
+          echo "# CONFIG_PACKAGE_mdadm is not set" >> .config
+
+          echo "==== 验证 shadow 是否已禁用 ===="
+          if grep -q "^CONFIG_PACKAGE_shadow.*=y" .config; then
+            echo "❌ shadow 仍被选中："
+            grep "^CONFIG_PACKAGE_shadow.*=y" .config
+          else
+            echo "✅ 所有 shadow 包已禁用"
+          fi
 
           sed -i '/CONFIG_SHADOW_PASSWORDS/d' .config
           echo "# CONFIG_SHADOW_PASSWORDS is not set" >> .config
