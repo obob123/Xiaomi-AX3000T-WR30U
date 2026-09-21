@@ -278,11 +278,6 @@ jobs:
           echo "==== 当前 commit ===="
           git log -1 --oneline
 
-      - name: 手动克隆 UA3F 源码
-        working-directory: ImmortalWrt
-        run: |
-          git clone https://github.com/SunBK201/UA3F.git package/UA3F
-
       - name: 添加 TurboACC 源码
         working-directory: ImmortalWrt
         run: |
