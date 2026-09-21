@@ -11,7 +11,7 @@ fi
 echo "📦 当前设备: $DEVICE，主机名: $HOSTNAME"
 
 # ========== 修改 IP ==========
-sed -i 's/192.168.1.1/192.168.1.2/g' package/base-files/files/bin/config_generate
+sed -i 's/192.168.1.1/192.168.1.1' package/base-files/files/bin/config_generate
 
 # ========== 修改主机名 ==========
 sed -i "s/ImmortalWrt/$HOSTNAME/g" package/base-files/files/bin/config_generate
