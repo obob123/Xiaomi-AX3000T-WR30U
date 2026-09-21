@@ -1,7 +1,7 @@
 # ========== 用户自定义软件包（UA3F / OAF / quickstart） ==========
 # CONFIG_PACKAGE_ua3f=y
 # CONFIG_PACKAGE_luci-app-ua3f=y
-CONFIG_PACKAGE_open-app-filter=y
+# CONFIG_PACKAGE_open-app-filter=y
 CONFIG_PACKAGE_zram-swap=y
 CONFIG_PACKAGE_kmod-lib-zstd=y
 CONFIG_PACKAGE_kmod-tcp-bbr=y
