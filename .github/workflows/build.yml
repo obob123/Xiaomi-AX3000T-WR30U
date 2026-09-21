@@ -85,48 +85,6 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
           echo "✅ TurboACC 已添加（来自 chenmozhijin，兼容 24.10）"
 
-      # ========== quickstart 全家桶（从 kenzok8 源） ==========
-      - name: 从 kenzok8 源拉取 quickstart 及其全部依赖
-        working-directory: ImmortalWrt
-        run: |
-          git clone --depth 1 --filter=blob:none --sparse https://github.com/kenzok8/openwrt-packages.git temp_kenzok8
-          cd temp_kenzok8
-          git sparse-checkout set quickstart luci-app-quickstart luci-app-store luci-lib-taskd luci-lib-xterm taskd
-          cd ..
-          mv temp_kenzok8/quickstart package/
-          mv temp_kenzok8/luci-app-quickstart package/
-          mv temp_kenzok8/luci-app-store package/
-          mv temp_kenzok8/luci-lib-taskd package/
-          mv temp_kenzok8/luci-lib-xterm package/
-          mv temp_kenzok8/taskd package/
-          rm -rf temp_kenzok8
-          echo "✅ quickstart 全部依赖链已拉取"
-
-      # ========== 修改 quickstart Makefile，移除不需要的依赖（安全修复版） ==========
-      - name: 修改 quickstart Makefile 移除不必要依赖
-        working-directory: ImmortalWrt
-        run: |
-          echo "==== 查找 quickstart 相关 Makefile ===="
-          find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null
-
-          echo ""
-          echo "==== 开始清理（只删包名，保留行结构和续行符）===="
-          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
-            echo "🔧 处理: $file"
-            cp "$file" "$file.bak"
-
-            # 只删除特定包名，不破坏行尾的续行符 \，不压缩全局空格
-            sed -i -E 's/\+shadow[a-z0-9-]*\b//g' "$file"
-            sed -i -E 's/\+smartmontools[a-z0-9-]*\b//g' "$file"
-            sed -i -E 's/\+smartd\b//g' "$file"
-            sed -i -E 's/\+mdadm\b//g' "$file"
-
-            echo "  ✅ 已处理"
-            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
-          done
-          echo ""
-          echo "✅ quickstart 依赖清理完成"
-
       - name: 复制自定义配置文件
         run: cp -f feeds.conf.default diy.sh seed.config ax3000t-stock.config ax3000t-ubootmod.config wr30u-stock.config wr30u-ubootmod.config ImmortalWrt/ 2>/dev/null || true
 
@@ -337,57 +295,11 @@ jobs:
         run: |
           git clone https://github.com/SunBK201/UA3F.git package/UA3F
 
-      - name: 克隆 OpenAppFilter (OAF) 源码
-        working-directory: ImmortalWrt
-        run: |
-          git clone https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
-
       - name: 添加 TurboACC 源码
         working-directory: ImmortalWrt
         run: |
           curl -sSL https://raw.githubusercontent.com/chenmozhijin/turboacc/luci/add_turboacc.sh -o add_turboacc.sh && bash add_turboacc.sh --no-sfe
           echo "✅ TurboACC 已添加（来自 chenmozhijin，兼容 24.10）"
-
-      - name: 从 kenzok8 源拉取 quickstart 及其全部依赖
-        working-directory: ImmortalWrt
-        run: |
-          git clone --depth 1 --filter=blob:none --sparse https://github.com/kenzok8/openwrt-packages.git temp_kenzok8
-          cd temp_kenzok8
-          git sparse-checkout set quickstart luci-app-quickstart luci-app-store luci-lib-taskd luci-lib-xterm taskd
-          cd ..
-          mv temp_kenzok8/quickstart package/
-          mv temp_kenzok8/luci-app-quickstart package/
-          mv temp_kenzok8/luci-app-store package/
-          mv temp_kenzok8/luci-lib-taskd package/
-          mv temp_kenzok8/luci-lib-xterm package/
-          mv temp_kenzok8/taskd package/
-          rm -rf temp_kenzok8
-          echo "✅ quickstart 全部依赖链已拉取"
-
-      # ========== 修改 quickstart Makefile，移除不需要的依赖（安全修复版） ==========
-      - name: 修改 quickstart Makefile 移除不必要依赖
-        working-directory: ImmortalWrt
-        run: |
-          echo "==== 查找 quickstart 相关 Makefile ===="
-          find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null
-
-          echo ""
-          echo "==== 开始清理（只删包名，保留行结构和续行符）===="
-          for file in $(find package/ -path "*quickstart*" -name "Makefile" 2>/dev/null); do
-            echo "🔧 处理: $file"
-            cp "$file" "$file.bak"
-
-            # 只删除特定包名，不破坏行尾的续行符 \，不压缩全局空格
-            sed -i -E 's/\+shadow[a-z0-9-]*\b//g' "$file"
-            sed -i -E 's/\+smartmontools[a-z0-9-]*\b//g' "$file"
-            sed -i -E 's/\+smartd\b//g' "$file"
-            sed -i -E 's/\+mdadm\b//g' "$file"
-
-            echo "  ✅ 已处理"
-            grep -E "DEPENDS" "$file" || echo "(无 DEPENDS)"
-          done
-          echo ""
-          echo "✅ quickstart 依赖清理完成"
 
       - name: 复制自定义配置文件
         run: cp -f feeds.conf.default diy.sh seed.config ax3000t-stock.config ax3000t-ubootmod.config wr30u-stock.config wr30u-ubootmod.config ImmortalWrt/ 2>/dev/null || true
