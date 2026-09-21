@@ -66,18 +66,6 @@ jobs:
           echo "==== 当前 commit ===="
           git log -1 --oneline
 
-      # ========== UA3F ==========
-      - name: 手动克隆 UA3F 源码
-        working-directory: ImmortalWrt
-        run: |
-          git clone https://github.com/SunBK201/UA3F.git package/UA3F
-
-      # ========== OpenAppFilter (OAF) ==========
-      - name: 克隆 OpenAppFilter (OAF) 源码
-        working-directory: ImmortalWrt
-        run: |
-          git clone https://github.com/destan19/OpenAppFilter.git package/OpenAppFilter
-
       # ========== TurboACC（来自 chenmozhijin/turboacc）==========
       - name: 添加 TurboACC 源码
         working-directory: ImmortalWrt
