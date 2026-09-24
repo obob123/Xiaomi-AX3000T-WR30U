@@ -30,12 +30,12 @@ chmod +x package/base-files/files/etc/uci-defaults/99-set-argon
 # ========== 吉林大学镜像站 ==========
 mkdir -p package/base-files/files/etc/opkg
 cat > package/base-files/files/etc/opkg/distfeeds.conf << 'EOF'
-src/gz immortalwrt_core https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/targets/mediatek/filogic/packages
-src/gz immortalwrt_base https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/packages/aarch64_cortex-a53/base
-src/gz immortalwrt_luci https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/packages/aarch64_cortex-a53/luci
-src/gz immortalwrt_packages https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/packages/aarch64_cortex-a53/packages
-src/gz immortalwrt_routing https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/packages/aarch64_cortex-a53/routing
-src/gz immortalwrt_telephony https://mirrors.jlu.edu.cn/immortalwrt/releases/24.10.6/packages/aarch64_cortex-a53/telephony
+src/gz immortalwrt_core https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/targets/mediatek/filogic/packages
+src/gz immortalwrt_base https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/packages/aarch64_cortex-a53/base
+src/gz immortalwrt_luci https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/packages/aarch64_cortex-a53/luci
+src/gz immortalwrt_packages https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/packages/aarch64_cortex-a53/packages
+src/gz immortalwrt_routing https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/packages/aarch64_cortex-a53/routing
+src/gz immortalwrt_telephony https://mirrors.jlu.edu.cn/immortalwrt/releases/23.05.7/packages/aarch64_cortex-a53/telephony
 EOF
 
 # ========== 默认启用 ZRAM（128MB + zstd） ==========
