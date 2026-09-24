@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: 'immortalwrt/immortalwrt'
-          ref: 'v24.10.6'
+          ref: 'v23.05.7'
           path: ImmortalWrt
           fetch-depth: 0
 
